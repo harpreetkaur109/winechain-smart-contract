@@ -2,18 +2,13 @@
 pragma solidity ^0.8.14;
 
 import "@openzeppelin/contracts-upgradeable/token/ERC721/extensions/ERC721URIStorageUpgradeable.sol";
+import "./libraries/structLib.sol";
 
 contract wineNFT is ERC721URIStorageUpgradeable {
     address marketPlace;
     uint256 count ;
-     struct NFTData{
-        address winery;
-        uint256 releaseDate;
-        uint amount;
-        string URI;
-
-    }
-    mapping(address => uint256) internal frozenNft;
+    
+    mapping(uint256 => Struct.NFTData) internal data;
     event minted(uint256, uint256);
     event NftUnfrozen(address, uint256);
 
@@ -29,13 +24,14 @@ contract wineNFT is ERC721URIStorageUpgradeable {
             super._transfer(from,to,tokenId);
     }
 
-    function bulkMint(uint256 amount, address to, string memory _uri) internal  {
+    function bulkMint(Struct.NFTData calldata NFT) external  {
         uint start =  count;
-        for(uint256 i=count;i<count + amount;i++){
-            _mint(to,i);
-            _setTokenURI(i, _uri);
+        for(uint256 i=count;i<count + NFT.amount;i++){
+            _mint(NFT.winery,i);
+            _setTokenURI(i, NFT.URI);
+            data[i] = NFT;
         }
-        count = count+ amount; 
+        count = count+ NFT.amount; 
         emit minted(start, count-1);
 
     }
