@@ -7,6 +7,7 @@ library Struct{
         address winery;
         uint256 releaseDate;
         uint amount;
+        uint256 deadline;
         string URI;
     }
 }

@@ -6,57 +6,51 @@ import "./libraries/structLib.sol";
 
 contract wineNFT is ERC721URIStorageUpgradeable {
     address marketPlace;
-    uint256 count ;
-    
+    uint256 count;
+
     mapping(uint256 => Struct.NFTData) internal data;
     event minted(uint256, uint256);
     event NftUnfrozen(address, uint256);
 
-    function initialize(address _marketPlace) external initializer {
+    function initialize(address _marketPlace) external  {
         marketPlace = _marketPlace;
-        count =1;
+        count = 1;
     }
 
-
-    function _transfer(address from, address to, uint256 tokenId) internal override(ERC721Upgradeable) {
-            require(msg.sender == marketPlace,"IC");//Invalid caller
-
-            super._transfer(from,to,tokenId);
+    function _transfer(
+        address from,
+        address to,
+        uint256 tokenId
+    ) internal override(ERC721Upgradeable) {
+        require(msg.sender == marketPlace, "IC"); //Invalid caller
+        require(block.timestamp <= data[tokenId].deadline,"FN");//Frozen NFT 
+        super._transfer(from, to, tokenId);
     }
 
-    function bulkMint(Struct.NFTData calldata NFT) external  {
-        uint start =  count;
-        for(uint256 i=count;i<count + NFT.amount;i++){
-            _mint(NFT.winery,i);
+    function changeDeadline(uint256 tokenId, uint256 increament) external {
+        require(_exists(tokenId));
+        data[tokenId].deadline += increament;
+    }
+
+    function bulkMint(Struct.NFTData calldata NFT) external {
+        uint256 start = count;
+        for (uint256 i = count; i < count + NFT.amount; i++) {
+            _mint(NFT.winery, i);
             _setTokenURI(i, NFT.URI);
             data[i] = NFT;
+            data[i].deadline = data[i].releaseDate + 7890000;
         }
-        count = count+ NFT.amount; 
-        emit minted(start, count-1);
-
+        count = count + NFT.amount;
+        emit minted(start, count - 1);
     }
-    // function freezePartialNft(
-    //     address _Nft,
-    //     uint256 _amount,
-    //     address _NftHolder
-    // ) public {
-    //     uint256 balance = balanceOf(_NftHolder);
-    //     require(
-    //         balance >= frozenNft[_NftHolder] + _amount,
-    //         "Amount exceeds available balance"
-    //     );
-    //     frozenNft[_NftHolder] = frozenNft[_NftHolder] + (_amount);
-    //     emit NftFrozen(_NftHolder, _amount);
-    // }
 
-    // function unfreezePartialTokens(address _Nft,uint256 _amount,address _NftHolder)
-    //     public
-    // {
-    //     require(
-    //         frozenNft[_NftHolder] >= _amount,
-    //         "Amount should be less than or equal to frozen tokens"
-    //     );
-    //     frozenNft[_NftHolder] = frozenNft[_NftHolder] - (_amount);
-    //     emit NftUnfrozen(_NftHolder, _amount);
-    // }
+    function checkDeadline(uint256 tokenId) external view returns(uint256){
+        require(_exists(tokenId));
+        return data[tokenId].deadline;
+    }
+
+   
+    
+
+   
 }
