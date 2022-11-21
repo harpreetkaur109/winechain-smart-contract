@@ -40,16 +40,41 @@ contract marketPlace is BasicMetaTransaction {
     }
 
     function buyNFT(Struct.NFTSell calldata sell, uint256 amount) external {
-        setAmount(sell, amount);
-        usdc.transferFrom(msg.sender, admin, amount * sell.price);
-        for (uint256 i = currentIndex[sell.winery]; i < currentIndex[sell.winery] + amount; i++) {
-            IERC721Upgradeable(NFTContract).transferFrom(
-                sell.winery,
-                msg.sender,
-                sell.tokenIds[i]
-            );
+        if (sell.isPrimary) {
+            setAmount(sell, amount);
+            usdc.transferFrom(msg.sender, admin, amount * sell.price);
+            for (
+                uint i = currentIndex[sell.winery];
+                i < currentIndex[sell.seller] + amount;
+                i++
+            ) {
+                IERC721Upgradeable(NFTContract).transferFrom(
+                    sell.seller,
+                    msg.sender,
+                    sell.tokenIds[i]
+                );
+            }
+            currentIndex[sell.seller] += amount;
+        } else {
+            setAmount(sell, amount);
+            uint transferAmount = amount * sell.price;
+            usdc.transferFrom(msg.sender, admin, (transferAmount*10)/100);
+            usdc.transferFrom(msg.sender, sell.winery, (transferAmount*20)/100);
+            usdc.transferFrom(msg.sender, admin, transferAmount-((transferAmount*30)/100));
+            for (
+                uint i = currentIndex[sell.winery];
+                i < currentIndex[sell.seller] + amount;
+                i++
+            ) {
+                IERC721Upgradeable(NFTContract).transferFrom(
+                    sell.seller,
+                    msg.sender,
+                    sell.tokenIds[i]
+                );
+            }
+            currentIndex[sell.seller] += amount;
+
         }
-        currentIndex[sell.winery] += amount;
     }
 
     function createPlan(Struct.planDetails calldata _planDetails)
@@ -81,18 +106,17 @@ contract marketPlace is BasicMetaTransaction {
     }
 
     function setAmount(Struct.NFTSell memory seller, uint256 amount) internal {
-        //Counter used
-        require(!allSold[seller.winery], "CU");
-        uint256 leftCounter = leftAmount[seller.winery];
-        if (leftCounter == 0) {
-            leftCounter = seller.amount - amount;
+        require(!allSold[seller.seller], "AS");//All Sold
+        uint256 _leftAmount = leftAmount[seller.winery];
+        if (_leftAmount == 0) {
+            _leftAmount = seller.amount - amount;
         } else {
-            leftCounter = leftCounter - amount;
+            _leftAmount = _leftAmount - amount;
         }
-        require(leftCounter >= 0, "ALZ"); //Amount left less than zero
+        require(_leftAmount >= 0, "ALZ"); //Amount left less than zero
 
-        leftAmount[seller.winery] = leftCounter;
-        if (leftCounter == 0) allSold[seller.winery] = true;
+        leftAmount[seller.winery] = _leftAmount;
+        if (_leftAmount == 0) allSold[seller.winery] = true;
     }
 
     function _msgSender()

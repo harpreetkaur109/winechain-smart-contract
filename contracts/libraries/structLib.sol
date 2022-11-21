@@ -7,14 +7,17 @@ library Struct {
         uint256 releaseDate;
         uint256 amount;
         uint256 deadline;
+        uint256 royaltyAmount;
         string URI;
     }
 
     struct NFTSell {
         address winery;
+        address seller;
         uint256[] tokenIds;
         uint256 price;
         uint256 amount;
+        bool isPrimary;
     }
 
     struct planDetails {
