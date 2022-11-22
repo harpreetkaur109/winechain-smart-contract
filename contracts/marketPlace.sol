@@ -114,8 +114,15 @@ contract marketPlace is BasicMetaTransaction {
     }
 
     function buyStorage(uint256 tokenId, uint256 _planNumber) external {
-        usdc.transferFrom(msg.sender, admin, plans[_planNumber].price);
-        INFT(NFTContract).changeDeadline(tokenId, plans[_planNumber].months);
+        uint256 time = ((block.timestamp -
+            INFT(NFTContract).checkDeadline(tokenId)) /
+            plans[_planNumber].months) + 1;
+
+        usdc.transferFrom(msg.sender, admin, plans[_planNumber].price * time);
+        INFT(NFTContract).changeDeadline(
+            tokenId,
+            plans[_planNumber].months + time
+        );
     }
 
     function renewStorage(uint256 tokenId, uint256 _planNumber)

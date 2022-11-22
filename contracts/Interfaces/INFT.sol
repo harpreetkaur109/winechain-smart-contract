@@ -9,4 +9,6 @@ interface INFT {
     function changeDeadline(uint256 tokenId, uint256 increament) external;
 
     function changeReleaseDate(uint256 tokenId, uint256 _newDate) external;
+
+    function checkDeadline(uint256 tokenId) external view returns (uint256);
 }
