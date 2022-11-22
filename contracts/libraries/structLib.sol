@@ -17,7 +17,6 @@ library Struct {
         uint256[] tokenIds;
         uint256 price;
         uint256 amount;
-        bool isPrimary;
     }
 
     struct planDetails {

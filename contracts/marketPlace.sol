@@ -29,6 +29,12 @@ contract marketPlace is BasicMetaTransaction {
         address _admin,
         address _usdc
     ) external {
+        require(
+            _NFTContract != address(0) &&
+                _admin != address(0) &&
+                _usdc != address(0),
+            "ZA"
+        ); //Zero Address
         NFTContract = _NFTContract;
         admin = _admin;
         planNumber = 1;
@@ -36,15 +42,19 @@ contract marketPlace is BasicMetaTransaction {
     }
 
     function createNFT(Struct.NFTData calldata NFT) external onlyAdmin {
+        require(NFT.winery != address(0), "ZA"); //Zero Address
+        require(NFT.releaseDate > block.timestamp, "ID"); //Invalid Date
         INFT(NFTContract).bulkMint(NFT);
     }
 
     function buyNFT(Struct.NFTSell calldata sell, uint256 amount) external {
-        if (sell.isPrimary) {
+        require(sell.winery != address(0), "ZA"); //Zero Address
+        require(sell.seller != address(0), "ZA"); //Zero Address
+        if (sell.seller == sell.winery) {
             setAmount(sell, amount);
             usdc.transferFrom(msg.sender, admin, amount * sell.price);
             for (
-                uint i = currentIndex[sell.winery];
+                uint256 i = currentIndex[sell.seller];
                 i < currentIndex[sell.seller] + amount;
                 i++
             ) {
@@ -57,12 +67,20 @@ contract marketPlace is BasicMetaTransaction {
             currentIndex[sell.seller] += amount;
         } else {
             setAmount(sell, amount);
-            uint transferAmount = amount * sell.price;
-            usdc.transferFrom(msg.sender, admin, (transferAmount*10)/100);
-            usdc.transferFrom(msg.sender, sell.winery, (transferAmount*20)/100);
-            usdc.transferFrom(msg.sender, admin, transferAmount-((transferAmount*30)/100));
+            uint256 transferAmount = amount * sell.price;
+            usdc.transferFrom(msg.sender, admin, (transferAmount * 10) / 100);
+            usdc.transferFrom(
+                msg.sender,
+                sell.winery,
+                (transferAmount * 20) / 100
+            );
+            usdc.transferFrom(
+                msg.sender,
+                sell.seller,
+                transferAmount - ((transferAmount * 30) / 100)
+            );
             for (
-                uint i = currentIndex[sell.winery];
+                uint256 i = currentIndex[sell.seller];
                 i < currentIndex[sell.seller] + amount;
                 i++
             ) {
@@ -73,7 +91,6 @@ contract marketPlace is BasicMetaTransaction {
                 );
             }
             currentIndex[sell.seller] += amount;
-
         }
     }
 
@@ -81,6 +98,8 @@ contract marketPlace is BasicMetaTransaction {
         external
         onlyAdmin
     {
+        require(_planDetails.months != 0, "IV"); //Invalid Value
+        require(_planDetails.price != 0, "IV"); //Invalid Value
         plans[planNumber].months = _planDetails.months;
         plans[planNumber].price = _planDetails.price;
         planNumber++;
@@ -90,6 +109,7 @@ contract marketPlace is BasicMetaTransaction {
         external
         onlyAdmin
     {
+        require(_newDate > block.timestamp, "ID"); //Invalid Date
         INFT(NFTContract).changeReleaseDate(tokenId, _newDate);
     }
 
@@ -106,7 +126,7 @@ contract marketPlace is BasicMetaTransaction {
     }
 
     function setAmount(Struct.NFTSell memory seller, uint256 amount) internal {
-        require(!allSold[seller.seller], "AS");//All Sold
+        require(!allSold[seller.seller], "AS"); //All Sold
         uint256 _leftAmount = leftAmount[seller.winery];
         if (_leftAmount == 0) {
             _leftAmount = seller.amount - amount;

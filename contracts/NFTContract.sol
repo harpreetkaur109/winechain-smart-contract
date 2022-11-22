@@ -6,10 +6,7 @@ import "@openzeppelin/contracts-upgradeable/token/ERC721/extensions/ERC721URISto
 import "./Relayer/BasicMetaTransaction.sol";
 import "./libraries/structLib.sol";
 
-contract wineNFT is
-    ERC721URIStorageUpgradeable,
-    BasicMetaTransaction
-{
+contract wineNFT is ERC721URIStorageUpgradeable, BasicMetaTransaction {
     uint256 count;
 
     mapping(uint256 => Struct.NFTData) internal data;
@@ -54,6 +51,7 @@ contract wineNFT is
     }
 
     function bulkMint(Struct.NFTData calldata NFT) external onlyOperator {
+       
         uint256 start = count;
         for (uint256 i = count; i < count + NFT.amount; i++) {
             _mint(NFT.winery, i);
