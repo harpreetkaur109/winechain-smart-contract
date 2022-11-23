@@ -10,6 +10,7 @@ contract wineNFT is ERC721URIStorageUpgradeable, BasicMetaTransaction {
     uint256 count;
 
     mapping(uint256 => Struct.NFTData) internal data;
+    mapping (uint => uint256) internal deadline;
     mapping(address => bool) internal operators;
     event minted(uint256, uint256);
     modifier onlyOperator() {
@@ -39,7 +40,7 @@ contract wineNFT is ERC721URIStorageUpgradeable, BasicMetaTransaction {
         // require(block.timestamp <= data[tokenId].releaseDate - 5 days,"TE");//Timeline Exceeded
         require(_newDate > data[tokenId].releaseDate, "ID"); //Invalid Date
         data[tokenId].releaseDate = _newDate;
-        data[tokenId].deadline = data[tokenId].releaseDate + 7890000;
+        deadline[tokenId] = data[tokenId].releaseDate + 7890000;
     }
 
     function changeDeadline(uint256 tokenId, uint256 increament)
@@ -47,7 +48,7 @@ contract wineNFT is ERC721URIStorageUpgradeable, BasicMetaTransaction {
         onlyOperator
     {
         require(_exists(tokenId));
-        data[tokenId].deadline += increament;
+        deadline[tokenId] += increament;
     }
 
     function bulkMint(Struct.NFTData calldata NFT) external onlyOperator {
@@ -57,7 +58,7 @@ contract wineNFT is ERC721URIStorageUpgradeable, BasicMetaTransaction {
             _mint(NFT.winery, i);
             _setTokenURI(i, NFT.URI);
             data[i] = NFT;
-            data[i].deadline = data[i].releaseDate + 7890000;
+            deadline[i] = data[i].releaseDate + 7890000;
         }
         count = count + NFT.amount;
         emit minted(start, count - 1);
@@ -65,7 +66,7 @@ contract wineNFT is ERC721URIStorageUpgradeable, BasicMetaTransaction {
 
     function checkDeadline(uint256 tokenId) external view returns (uint256) {
         require(_exists(tokenId));
-        return data[tokenId].deadline;
+        return deadline[tokenId];
     }
 
     // function supportsInterface(bytes4 interfaceId)
