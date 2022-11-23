@@ -28,7 +28,7 @@ contract wineNFT is ERC721URIStorageUpgradeable, BasicMetaTransaction {
         address to,
         uint256 tokenId
     ) internal override(ERC721Upgradeable) onlyOperator {
-        require(block.timestamp <= data[tokenId].deadline, "FN"); //Frozen NFT
+        require(block.timestamp <= deadline[tokenId], "FN"); //Frozen NFT
         super._transfer(from, to, tokenId);
     }
 
