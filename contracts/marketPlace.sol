@@ -14,6 +14,7 @@ contract marketPlace is BasicMetaTransaction {
     IERC20 public usdc;
 
     mapping(uint256 => Struct.planDetails) internal plans;
+    mapping(uint256 => Struct.planDetails) internal currentPlan;
     mapping(address => bool) internal operators;
     mapping(address => uint256) internal leftAmount;
     mapping(address => bool) internal allSold;
@@ -53,6 +54,7 @@ contract marketPlace is BasicMetaTransaction {
         if (sell.seller == sell.winery) {
             setAmount(sell, amount);
             usdc.transferFrom(msg.sender, admin, amount * sell.price);
+
             for (
                 uint256 i = currentIndex[sell.seller];
                 i < currentIndex[sell.seller] + amount;
@@ -64,8 +66,12 @@ contract marketPlace is BasicMetaTransaction {
                     sell.tokenIds[i]
                 );
             }
+
             currentIndex[sell.seller] += amount;
         } else {
+            uint256 monthsLeft;
+            uint256 Amount;
+            uint256 total;
             setAmount(sell, amount);
             uint256 transferAmount = amount * sell.price;
             usdc.transferFrom(msg.sender, admin, (transferAmount * 10) / 100);
@@ -89,7 +95,16 @@ contract marketPlace is BasicMetaTransaction {
                     msg.sender,
                     sell.tokenIds[i]
                 );
+                monthsLeft =
+                    (INFT(NFTContract).checkDeadline(i) - block.timestamp) /
+                    2629746;
+                Amount =
+                    (currentPlan[i].months / currentPlan[i].price) *
+                    monthsLeft;
+                total += Amount;
+                INFT(NFTContract).setDeadline(i, block.timestamp);
             }
+            usdc.transferFrom(admin, sell.seller, total);
             currentIndex[sell.seller] += amount;
         }
     }
@@ -118,6 +133,7 @@ contract marketPlace is BasicMetaTransaction {
             uint256 timeDifference = block.timestamp -
                 INFT(NFTContract).checkDeadline(tokenId);
             uint256 time = (timeDifference / plans[_planNumber].months) + 1;
+            currentPlan[tokenId] = plans[_planNumber];
             usdc.transferFrom(
                 msg.sender,
                 admin,
@@ -129,6 +145,7 @@ contract marketPlace is BasicMetaTransaction {
             );
         } else {
             usdc.transferFrom(msg.sender, admin, plans[_planNumber].price);
+            currentPlan[tokenId] = plans[_planNumber];
             INFT(NFTContract).changeDeadline(
                 tokenId,
                 plans[_planNumber].months
@@ -140,6 +157,7 @@ contract marketPlace is BasicMetaTransaction {
         external
         onlyAdmin
     {
+        currentPlan[tokenId] = plans[_planNumber];
         INFT(NFTContract).changeDeadline(tokenId, plans[_planNumber].months);
     }
 

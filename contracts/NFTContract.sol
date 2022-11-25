@@ -43,12 +43,17 @@ contract wineNFT is ERC721URIStorageUpgradeable, BasicMetaTransaction {
         deadline[tokenId] = data[tokenId].releaseDate + 7890000;
     }
 
-    function changeDeadline(uint256 tokenId, uint256 increament)
+    function increaseDeadline(uint256 tokenId, uint256 increament)
         external
         onlyOperator
     {
         require(_exists(tokenId));
         deadline[tokenId] += increament;
+    }
+
+    function setDeadline(uint256 tokenId, uint256 time) external onlyOperator{
+        require(_exists(tokenId));
+        deadline[tokenId] = time;
     }
 
     function bulkMint(Struct.NFTData calldata NFT) external onlyOperator {
