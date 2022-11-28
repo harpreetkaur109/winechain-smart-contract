@@ -8,7 +8,7 @@ import "./libraries/structLib.sol";
 
 contract wineNFT is ERC721URIStorageUpgradeable, BasicMetaTransaction {
     uint256 count;
-
+    bool isInitialised;
     mapping(uint256 => Struct.NFTData) internal data;
     mapping (uint => uint256) internal deadline;
     mapping(address => bool) internal operators;
@@ -18,7 +18,10 @@ contract wineNFT is ERC721URIStorageUpgradeable, BasicMetaTransaction {
         _;
     }
 
-    function initialize(address _marketPlace) external {
+    function initialize(address _marketPlace) external 
+    {
+        require(!isInitialised,"AI");//Already Initialised
+        isInitialised = true;
         operators[_marketPlace] = true;
         count = 1;
     }
@@ -73,7 +76,7 @@ contract wineNFT is ERC721URIStorageUpgradeable, BasicMetaTransaction {
         require(_exists(tokenId));
         return deadline[tokenId];
     }
-
+    
     // function supportsInterface(bytes4 interfaceId)
     //     public
     //     view
