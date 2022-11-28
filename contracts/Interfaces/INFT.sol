@@ -6,7 +6,7 @@ import "../libraries/structLib.sol";
 interface INFT {
     function bulkMint(Struct.NFTData calldata NFT) external;
 
-    function changeDeadline(uint256 tokenId, uint256 increament) external;
+    function increaseDeadline(uint256 tokenId, uint256 increament) external;
 
     function changeReleaseDate(uint256 tokenId, uint256 _newDate) external;
 

@@ -139,14 +139,14 @@ contract marketPlace is BasicMetaTransaction {
                 admin,
                 plans[_planNumber].price * time
             );
-            INFT(NFTContract).changeDeadline(
+            INFT(NFTContract).increaseDeadline(
                 tokenId,
                 plans[_planNumber].months + time
             );
         } else {
             usdc.transferFrom(msg.sender, admin, plans[_planNumber].price);
             currentPlan[tokenId] = plans[_planNumber];
-            INFT(NFTContract).changeDeadline(
+            INFT(NFTContract).increaseDeadline(
                 tokenId,
                 plans[_planNumber].months
             );
@@ -158,7 +158,7 @@ contract marketPlace is BasicMetaTransaction {
         onlyAdmin
     {
         currentPlan[tokenId] = plans[_planNumber];
-        INFT(NFTContract).changeDeadline(tokenId, plans[_planNumber].months);
+        INFT(NFTContract).increaseDeadline(tokenId, plans[_planNumber].months);
     }
 
     function setAmount(Struct.NFTSell memory seller, uint256 amount) internal {
