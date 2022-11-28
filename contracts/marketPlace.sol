@@ -69,7 +69,7 @@ contract marketPlace is BasicMetaTransaction {
 
             currentIndex[sell.seller] += amount;
         } else {
-            uint256 monthsLeft;
+            uint256 daysLeft;
             uint256 Amount;
             uint256 total;
             setAmount(sell, amount);
@@ -95,14 +95,14 @@ contract marketPlace is BasicMetaTransaction {
                     msg.sender,
                     sell.tokenIds[i]
                 );
-                monthsLeft =
-                    (INFT(NFTContract).checkDeadline(i) - block.timestamp) /
-                    2629746;
+                daysLeft =
+                    (INFT(NFTContract).checkDeadline(sell.tokenIds[i]) - block.timestamp) /
+                    86400;
                 Amount =
-                    (currentPlan[i].months / currentPlan[i].price) *
-                    monthsLeft;
+                    ((currentPlan[i].months/86400) / currentPlan[i].price) *
+                    daysLeft;
                 total += Amount;
-                INFT(NFTContract).setDeadline(i, block.timestamp);
+                INFT(NFTContract).setDeadline(sell.tokenIds[i], block.timestamp);
             }
             usdc.transferFrom(admin, sell.seller, total);
             currentIndex[sell.seller] += amount;
