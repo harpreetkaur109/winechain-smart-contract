@@ -96,8 +96,8 @@ contract marketPlace is BasicMetaTransaction {
                     sell.tokenIds[i]
                 );
                 daysLeft =
-                    (INFT(NFTContract).checkDeadline(sell.tokenIds[i]) - block.timestamp) /
-                    86400;
+                    ((INFT(NFTContract).checkDeadline(sell.tokenIds[i]) - block.timestamp) /
+                    864000)+1;
                 Amount =
                     ((currentPlan[i].months/86400) / currentPlan[i].price) *
                     daysLeft;
