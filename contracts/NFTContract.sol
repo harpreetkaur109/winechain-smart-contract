@@ -18,11 +18,12 @@ contract wineNFT is ERC721URIStorageUpgradeable, BasicMetaTransaction {
         _;
     }
 
-    function initialize(address _marketPlace) external 
+    function initialize(address _marketPlace,address admin) external 
     {
         require(!isInitialised,"AI");//Already Initialised
         isInitialised = true;
         operators[_marketPlace] = true;
+        operators[admin] = true;
         count = 1;
     }
 
