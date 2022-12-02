@@ -161,9 +161,9 @@ contract marketPlace is BasicMetaTransaction {
         INFT(NFTContract).increaseDeadline(tokenId, plans[_planNumber].months);
     }
 
-    function checkStorage(uint256 tokenId) external {
-        if(block.timestamp > INFT(NFTContract).checkDeadline(tokenId)+31557600)
-    }
+    // function checkStorage(uint256 tokenId) external {
+    //     if(block.timestamp > INFT(NFTContract).checkDeadline(tokenId)+31557600);
+    // }
 
     function setAmount(Struct.NFTSell memory seller, uint256 amount) internal {
         require(!allSold[seller.seller], "AS"); //All Sold

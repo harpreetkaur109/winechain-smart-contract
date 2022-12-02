@@ -5,6 +5,7 @@ import "@openzeppelin/contracts-upgradeable/token/ERC721/extensions/ERC721URISto
 // import "@openzeppelin/contracts-upgradeable/token/common/ERC2981Upgradeable.sol";
 import "./Relayer/BasicMetaTransaction.sol";
 import "./libraries/structLib.sol";
+import "hardhat/console.sol";
 
 contract wineNFT is ERC721URIStorageUpgradeable, BasicMetaTransaction {
     uint256 count;
@@ -32,6 +33,7 @@ contract wineNFT is ERC721URIStorageUpgradeable, BasicMetaTransaction {
         address to,
         uint256 tokenId
     ) internal override(ERC721Upgradeable) onlyOperator {
+        console.log("hey");
         require(block.timestamp <= deadline[tokenId], "FN"); //Frozen NFT
         super._transfer(from, to, tokenId);
     }
@@ -40,7 +42,7 @@ contract wineNFT is ERC721URIStorageUpgradeable, BasicMetaTransaction {
         external
         onlyOperator
     {
-        require(_exists(tokenId));
+        require(_exists(tokenId),"IT");
         // require(block.timestamp <= data[tokenId].releaseDate - 5 days,"TE");//Timeline Exceeded
         require(_newDate > data[tokenId].releaseDate, "ID"); //Invalid Date
         data[tokenId].releaseDate = _newDate;
@@ -51,13 +53,16 @@ contract wineNFT is ERC721URIStorageUpgradeable, BasicMetaTransaction {
         external
         onlyOperator
     {
-        require(_exists(tokenId));
+        require(_exists(tokenId),"IT");
         deadline[tokenId] += increament;
     }
 
     function setDeadline(uint256 tokenId, uint256 time) external onlyOperator{
-        require(_exists(tokenId));
+        require(_exists(tokenId),"IT");
+        console.log("deadline 1",deadline[tokenId]);
         deadline[tokenId] = time;
+        console.log("deadline 2",deadline[tokenId]);
+
     }
 
     function bulkMint(Struct.NFTData calldata NFT) external onlyOperator {
@@ -74,7 +79,7 @@ contract wineNFT is ERC721URIStorageUpgradeable, BasicMetaTransaction {
     }
 
     function checkDeadline(uint256 tokenId) external view returns (uint256) {
-        require(_exists(tokenId));
+        require(_exists(tokenId),"IT");
         return deadline[tokenId];
     }
     
