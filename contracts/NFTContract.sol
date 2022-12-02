@@ -33,7 +33,6 @@ contract wineNFT is ERC721URIStorageUpgradeable, BasicMetaTransaction {
         address to,
         uint256 tokenId
     ) internal override(ERC721Upgradeable) onlyOperator {
-        console.log("hey");
         require(block.timestamp <= deadline[tokenId], "FN"); //Frozen NFT
         super._transfer(from, to, tokenId);
     }
@@ -59,9 +58,7 @@ contract wineNFT is ERC721URIStorageUpgradeable, BasicMetaTransaction {
 
     function setDeadline(uint256 tokenId, uint256 time) external onlyOperator{
         require(_exists(tokenId),"IT");
-        console.log("deadline 1",deadline[tokenId]);
         deadline[tokenId] = time;
-        console.log("deadline 2",deadline[tokenId]);
 
     }
 
