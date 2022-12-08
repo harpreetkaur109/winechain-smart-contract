@@ -2,8 +2,8 @@ import { MarketPlace, MarketPlace__factory, Usdc__factory, WineNFT, WineNFT__fac
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
 import { ethers } from "hardhat";
 import { Usdc } from "../typechain-types/contracts/mock/USDC.sol";
-import { expandTo18Decimals, mineBlocks } from "./utilities";
 import { expect } from "chai";
+import SellerVoucher from "./utilities/SellerVoucher";
 
 describe("winechain", async () =>{
 let NFT : WineNFT;
@@ -291,8 +291,9 @@ it("ERROR : create NFT, invalid release date", async () =>{
   await  expect(Marketplace.connect(owner).createNFT(nft)).to.be.revertedWith("ID");
 
 })
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+it.only("Buy NFT", async () =>{
 
-it ("Buy NFT", async () =>{
   let nft = {
     winery:signers[1].address,
     releaseDate: 1677217037,
@@ -301,9 +302,10 @@ it ("Buy NFT", async () =>{
     URI:"NFT1"
   }
   await Marketplace.connect(owner).createNFT(nft);
+  console.log("ownernfts",await NFT.balanceOf(signers[1].address))
   await NFT.connect(signers[1]).setApprovalForAll(Marketplace.address,true);
 
-await USDC.connect(signers[2]).approve(
+   await USDC.connect(signers[2]).approve(
         Marketplace.address,
         1000000
       );
@@ -311,23 +313,31 @@ await USDC.connect(signers[2]).approve(
         Marketplace.address,
         1000000
       );
-      // await USDT.connect(signers[1]).approve(
-      //   marketplace.address,
-      //   expandTo18Decimals(60)
-      // );
-      
-      let sell ={
-        winery : signers[1].address,
-        seller : signers[1].address,
-        tokenIds : [1,2,3],
-        price : 100,
-        amount: 2,
-    }
 
-    await Marketplace.connect(signers[2]).buyNFT(sell,1);
+      // creating vouchers
+      const seller = new SellerVoucher({
+        _contract: Marketplace,
+        _signer : signers[1],
+      });
+
+    console.log("test cases",signers[1].address);
+      const sellerVoucher = await seller.createVoucher(
+        signers[1].address,
+        signers[1].address,
+        1,
+        100
+      )
+     
+    console.log("sellervoucher",sellerVoucher);
+    console.log("balance",await NFT.balanceOf(signers[1].address));
+    await Marketplace.connect(signers[2]).buyNFT(sellerVoucher,{gasLimit:3000000});
+    console.log("balance",await NFT.balanceOf(signers[1].address));
+
     expect(await NFT.ownerOf(1)).to.be.eq(signers[2].address);
-    await Marketplace.connect(signers[3]).buyNFT(sell,1);
-    expect(await NFT.ownerOf(2)).to.be.eq(signers[3].address);
+    // await Marketplace.connect(signers[3]).buyNFT(sellerVoucher,1,{gasLimit:3000000});
+
+//     await Marketplace.connect(signers[3]).buyNFT(sellerVoucher,1);
+//     expect(await NFT.ownerOf(2)).to.be.eq(signers[3].address);
 })
 
 it("ERROR:Winery address zero for Buy NFT", async () =>{
@@ -349,14 +359,21 @@ await USDC.connect(signers[2]).approve(
         Marketplace.address,
         1000000
       );   
-      let sell ={
-        winery : "0x0000000000000000000000000000000000000000",
-        seller : signers[1].address,
-        tokenIds : [1,2,3],
-        price : 100,
-        amount: 2,
-    }
-    await expect (Marketplace.connect(signers[2]).buyNFT(sell,1)).to.be.revertedWith("ZA");
+   
+     //creating vouchers
+     const seller = new SellerVoucher({
+      _contract: Marketplace,
+      _signer : signers[1],
+    });
+
+    const sellerVoucher = await seller.createVoucher(
+      "0x0000000000000000000000000000000000000000",
+      signers[1].address,
+      [1,2,3],
+      100,
+      2,
+    )
+    await expect (Marketplace.connect(signers[2]).buyNFT(sellerVoucher,1)).to.be.revertedWith("ZA");
 })
 
 it("ERROR:Seller address zero for Buy NFT", async () =>{
@@ -379,17 +396,87 @@ await USDC.connect(signers[2]).approve(
         1000000
       );
     
+        //creating vouchers
+        const seller = new SellerVoucher({
+          _contract: Marketplace,
+          _signer : signers[1],
+        });
+  
+        const sellerVoucher = await seller.createVoucher(
+          signers[1].address,
+          "0x0000000000000000000000000000000000000000",
+          [1,2,3],
+          100,
+          2,
+        )
       
-      let sell ={
-        winery : signers[1].address,
-        seller : "0x0000000000000000000000000000000000000000",
-        tokenIds : [1,2,3],
-        price : 100,
-        amount: 2,
-    }
-    await expect(Marketplace.connect(signers[2]).buyNFT(sell,1)).to.be.revertedWith("ZA");
+    await expect(Marketplace.connect(signers[2]).buyNFT(sellerVoucher,1)).to.be.revertedWith("ZA");
   
 })
+
+
+// it.only("secondary Buy NFT", async () =>{
+//   let nft = {
+//     winery:signers[1].address,
+//     releaseDate: 1677217037,
+//     amount:4,
+//     royaltyAmount:10,
+//     URI:"NFT1"
+//   }
+//   await Marketplace.connect(owner).createNFT(nft);
+//   await NFT.connect(signers[1]).setApprovalForAll(Marketplace.address,true);
+
+// await USDC.connect(signers[2]).approve(
+//         Marketplace.address,
+//         1000000
+//       );
+//       await USDC.connect(signers[3]).approve(
+//         Marketplace.address,
+//         1000000
+//       );
+//       // await USDT.connect(signers[1]).approve(
+//       //   marketplace.address,
+//       //   expandTo18Decimals(60)
+//       // );
+      
+//       let sell ={
+//         winery : signers[1].address,
+//         seller : signers[1].address,
+//         tokenId : [1,2,3],
+//         price : 100,
+//         amount: 2,
+//     }
+
+//     await Marketplace.connect(signers[2]).buyNFT(sell,1);
+//     expect(await NFT.ownerOf(1)).to.be.eq(signers[2].address);
+//     await Marketplace.connect(signers[3]).buyNFT(sell,1);
+//     expect(await NFT.ownerOf(2)).to.be.eq(signers[3].address);
+
+//     await NFT.connect(signers[2]).setApprovalForAll(Marketplace.address,true);
+
+//     let sell2 ={
+//       winery : signers[1].address,
+//       seller : signers[2].address,
+//       tokenId : [1,2,3],
+//       price : 150,
+//       amount: 1,
+//   }
+
+//     let plan = {
+//     months:10,
+//     price:50 
+//   }
+//   await Marketplace.connect(owner).createPlan(plan);
+//   await USDC.connect(signers[2]).approve(
+//     Marketplace.address,
+//     1000000000000000
+//   );
+//   await Marketplace.connect(signers[2]).buyStorage(1,1);
+
+//     await Marketplace.connect(signers[3]).buyNFT(sell2,1);
+
+
+// })
 
 
 
@@ -422,7 +509,7 @@ await USDC.connect(signers[2]).approve(
 //       let sell ={
 //         winery : signers[1].address,
 //         seller : signers[1].address,
-//         tokenIds : [1,2,3],
+//         tokenId : [1,2,3],
 //         price : 100,
 //         amount: 2,
 //     }
@@ -444,7 +531,7 @@ await USDC.connect(signers[2]).approve(
 //     let sell2 ={
 //       winery : signers[1].address,
 //       seller : signers[2].address,
-//       tokenIds : [1,2,3],
+//       tokenId : [1,2,3],
 //       price : 100,
 //       amount: 1,
 //   }
@@ -492,20 +579,28 @@ await USDC.connect(signers[2]).approve(
       //   marketplace.address,
       //   expandTo18Decimals(60)
       // );
-      
-      let sell ={
-        winery : signers[1].address,
-        seller : signers[1].address,
-        tokenIds : [1,2,3],
-        price : 100,
-        amount: 2,
-    }
+    
 
-    await Marketplace.connect(signers[2]).buyNFT(sell,1);
+     //creating vouchers
+     const seller = new SellerVoucher({
+      _contract: Marketplace,
+      _signer : signers[1],
+    });
+
+    const sellerVoucher = await seller.createVoucher(
+      signers[1].address,
+      signers[1].address,
+      [1,2,3],
+      100,
+      2,
+    )
+
+
+    await Marketplace.connect(signers[2]).buyNFT(sellerVoucher,1);
     expect(await NFT.ownerOf(1)).to.be.eq(signers[2].address);
-    await Marketplace.connect(signers[3]).buyNFT(sell,1);
+    await Marketplace.connect(signers[3]).buyNFT(sellerVoucher,1);
     expect(await NFT.ownerOf(2)).to.be.eq(signers[3].address);
-    await expect (Marketplace.connect(signers[3]).buyNFT(sell,1)).to.be.revertedWith("AS");
+    await expect (Marketplace.connect(signers[3]).buyNFT(sellerVoucher,1)).to.be.revertedWith("AS");
 })
 
 
@@ -544,8 +639,6 @@ it("create plan  ", async () => {
       await expect (Marketplace.connect(owner).createPlan(plan)).to.be.rejectedWith("IV");
   })  
 
-
-  
 it("change release date ", async () =>{
   let nft = {
     winery:signers[1].address,

@@ -6,8 +6,14 @@ import "./Interfaces/INFT.sol";
 import "./Relayer/BasicMetaTransaction.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts-upgradeable/token/ERC721/IERC721Upgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/utils/cryptography/draft-EIP712Upgradeable.sol";
+import "hardhat/console.sol";
 
-contract marketPlace is BasicMetaTransaction {
+contract marketPlace is EIP712Upgradeable,BasicMetaTransaction {
+
+    //  bytes32 public constant WINECHAIN_SELLER_HASH =
+    //     0x51578850e098d13a094707a5ac92c49e129a0105cf9dd73242d806c6226cb33b;
+
     address NFTContract;
     address admin;
     uint256 planNumber;
@@ -29,7 +35,9 @@ contract marketPlace is BasicMetaTransaction {
         address _NFTContract,
         address _admin,
         address _usdc
-    ) external {
+    ) external initializer{
+        __EIP712_init("WineChain_NFT_Voucher", "1");
+
         require(
             _NFTContract != address(0) &&
                 _admin != address(0) &&
@@ -48,65 +56,98 @@ contract marketPlace is BasicMetaTransaction {
         INFT(NFTContract).bulkMint(NFT);
     }
 
-    function buyNFT(Struct.NFTSell calldata sell, uint256 amount) external {
+////////////////////////////////////////////////////////buyNFT////////////////////////////////////////
+    function buyNFT(Struct.NFTSell calldata sell) external {
+        // console.log("buyNFT insidesell.tokenId" ,sell.tokenId[0],sell.tokenId[1],sell.tokenId[2]);
+
+        console.log("buyNFT sell.seller" ,sell.seller);
+        console.log("buyNFT _verifySeller(sell)" ,_verifySeller(sell));
+
+        require(sell.seller== _verifySeller(sell), "ISA");
+
         require(sell.winery != address(0), "ZA"); //Zero Address
         require(sell.seller != address(0), "ZA"); //Zero Address
         if (sell.seller == sell.winery) {
-            setAmount(sell, amount);
-            usdc.transferFrom(msg.sender, admin, amount * sell.price);
-
-            for (
-                uint256 i = currentIndex[sell.seller];
-                i < currentIndex[sell.seller] + amount;
-                i++
-            ) {
+            // setAmount(sell, amount);
+            usdc.transferFrom(msg.sender, admin, sell.price);
                 IERC721Upgradeable(NFTContract).transferFrom(
                     sell.seller,
                     msg.sender,
-                    sell.tokenIds[i]
+                    sell.tokenId
                 );
-            }
-
-            currentIndex[sell.seller] += amount;
+          
         } else {
             uint256 daysLeft;
             uint256 Amount;
             uint256 total;
-            setAmount(sell, amount);
-            uint256 transferAmount = amount * sell.price;
-            usdc.transferFrom(msg.sender, admin, (transferAmount * 10) / 100);
+            // setAmount(sell, amount);
+            usdc.transferFrom(msg.sender, admin, (sell.price * 10) / 100);
             usdc.transferFrom(
                 msg.sender,
                 sell.winery,
-                (transferAmount * 20) / 100
+                (sell.price * 20) / 100
             );
             usdc.transferFrom(
                 msg.sender,
                 sell.seller,
-                transferAmount - ((transferAmount * 30) / 100)
+                sell.price - ((sell.price * 30) / 100)
             );
-            for (
-                uint256 i = currentIndex[sell.seller];
-                i < currentIndex[sell.seller] + amount;
-                i++
-            ) {
+          
                 IERC721Upgradeable(NFTContract).transferFrom(
                     sell.seller,
                     msg.sender,
-                    sell.tokenIds[i]
+                    sell.tokenId
                 );
                 daysLeft =
-                    ((INFT(NFTContract).checkDeadline(sell.tokenIds[i]) - block.timestamp) /
+                    ((INFT(NFTContract).checkDeadline(sell.tokenId) - block.timestamp) /
                     864000)+1;
                 Amount =
-                    ((currentPlan[i].months/86400) / currentPlan[i].price) *
+                    ((currentPlan[sell.tokenId].months/86400) / currentPlan[sell.tokenId].price) *
                     daysLeft;
                 total += Amount;
-                INFT(NFTContract).setDeadline(sell.tokenIds[i], block.timestamp);
-            }
+                INFT(NFTContract).setDeadline(sell.tokenId, block.timestamp);
+            
             usdc.transferFrom(admin, sell.seller, total);
-            currentIndex[sell.seller] += amount;
         }
+    }
+
+     /**
+     * @notice Returns a hash of the given HeftyVerseSeller, prepared using EIP712 typed data hashing rules.
+     * @param sell is a HeftyVerseSeller to hash.
+     */
+    function _hashSeller(Struct.NFTSell calldata sell)
+        internal
+        view
+        returns (bytes32)
+    {
+        return
+            _hashTypedDataV4(
+                keccak256(
+                    abi.encode(
+                        keccak256(
+                            "NFTSell(address winery,address seller,uint256 tokenId,uint256 price)"
+                        ),
+                        sell.winery,
+                        sell.seller,
+                        sell.tokenId,
+                        sell.price
+                    )
+                )
+            );
+    }
+
+     /**
+     * @notice Verifies the signature for a given HeftyVerseSeller, returning the address of the signer.
+     * @dev Will revert if the signature is invalid. Does not verify that the signer is owner of the NFT.
+     * @param sell is a HeftyVerseSeller describing the NFT to be sold
+     */
+    function _verifySeller(Struct.NFTSell calldata sell)
+        internal
+        view
+        returns (address)
+    {
+        bytes32 digest = _hashSeller(sell);
+        return ECDSAUpgradeable.recover(digest, sell.signature);
     }
 
     function createPlan(Struct.planDetails calldata _planDetails)
@@ -165,19 +206,19 @@ contract marketPlace is BasicMetaTransaction {
     //     if(block.timestamp > INFT(NFTContract).checkDeadline(tokenId)+31557600);
     // }
 
-    function setAmount(Struct.NFTSell memory seller, uint256 amount) internal {
-        require(!allSold[seller.seller], "AS"); //All Sold
-        uint256 _leftAmount = leftAmount[seller.winery];
-        if (_leftAmount == 0) {
-            _leftAmount = seller.amount - amount;
-        } else {
-            _leftAmount = _leftAmount - amount;
-        }
-        require(_leftAmount >= 0, "ALZ"); //Amount left less than zero
+    // function setAmount(Struct.NFTSell memory seller, uint256 amount) internal {
+    //     require(!allSold[seller.seller], "AS"); //All Sold
+    //     uint256 _leftAmount = leftAmount[seller.winery];
+    //     if (_leftAmount == 0) {
+    //         _leftAmount = seller.amount - amount;
+    //     } else {
+    //         _leftAmount = _leftAmount - amount;
+    //     }
+    //     require(_leftAmount >= 0, "ALZ"); //Amount left less than zero
 
-        leftAmount[seller.winery] = _leftAmount;
-        if (_leftAmount == 0) allSold[seller.winery] = true;
-    }
+    //     leftAmount[seller.winery] = _leftAmount;
+    //     if (_leftAmount == 0) allSold[seller.winery] = true;
+    // }
 
     function _msgSender()
         internal

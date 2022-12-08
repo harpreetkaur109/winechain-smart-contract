@@ -13,9 +13,9 @@ library Struct {
     struct NFTSell {
         address winery;
         address seller;
-        uint256[] tokenIds;
+        uint256 tokenId;
         uint256 price;
-        uint256 amount;
+        bytes signature; 
     }
 
     struct planDetails {
