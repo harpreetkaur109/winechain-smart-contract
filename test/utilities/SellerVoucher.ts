@@ -48,8 +48,8 @@ class SellerVoucher {
     // console.log("let me signer",this.signer.address);
 
     const signature = await this.signer._signTypedData(domain, types, voucher);
-    console.log("signature",signature);
-    console.log(voucher,"voucher");
+    // console.log("signature",signature);
+    // console.log(voucher,"voucher");
     return {
       ...voucher,
       signature,

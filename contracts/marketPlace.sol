@@ -56,17 +56,11 @@ contract marketPlace is EIP712Upgradeable,BasicMetaTransaction {
         INFT(NFTContract).bulkMint(NFT);
     }
 
-////////////////////////////////////////////////////////buyNFT////////////////////////////////////////
     function buyNFT(Struct.NFTSell calldata sell) external {
-        // console.log("buyNFT insidesell.tokenId" ,sell.tokenId[0],sell.tokenId[1],sell.tokenId[2]);
-
-        console.log("buyNFT sell.seller" ,sell.seller);
-        console.log("buyNFT _verifySeller(sell)" ,_verifySeller(sell));
-
+        require(sell.winery != address(0), "ZA"); //Zero Address
+        require(sell.seller != address(0), "ZA"); //Zero Address        note if signature condition put ahead no need for this require
         require(sell.seller== _verifySeller(sell), "ISA");
 
-        require(sell.winery != address(0), "ZA"); //Zero Address
-        require(sell.seller != address(0), "ZA"); //Zero Address
         if (sell.seller == sell.winery) {
             // setAmount(sell, amount);
             usdc.transferFrom(msg.sender, admin, sell.price);
@@ -81,6 +75,8 @@ contract marketPlace is EIP712Upgradeable,BasicMetaTransaction {
             uint256 Amount;
             uint256 total;
             // setAmount(sell, amount);
+            require(currentPlan[sell.tokenId].months > 0, "NS");   //check
+
             usdc.transferFrom(msg.sender, admin, (sell.price * 10) / 100);
             usdc.transferFrom(
                 msg.sender,
@@ -101,13 +97,15 @@ contract marketPlace is EIP712Upgradeable,BasicMetaTransaction {
                 daysLeft =
                     ((INFT(NFTContract).checkDeadline(sell.tokenId) - block.timestamp) /
                     864000)+1;
+
+                // reembursement amount
                 Amount =
-                    ((currentPlan[sell.tokenId].months/86400) / currentPlan[sell.tokenId].price) *
+                    ((currentPlan[sell.tokenId].months*2630000/86400) / currentPlan[sell.tokenId].price) *
                     daysLeft;
                 total += Amount;
                 INFT(NFTContract).setDeadline(sell.tokenId, block.timestamp);
             
-            usdc.transferFrom(admin, sell.seller, total);
+            // usdc.transferFrom(admin, sell.seller, total);
         }
     }
 
