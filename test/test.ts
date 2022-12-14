@@ -390,6 +390,7 @@ it("ERROR: Buy NFT,not token owner or approved", async () =>{
     royaltyAmount:10,
     URI:"NFT1"
   }
+
   await Marketplace.connect(owner).createNFT(nft);
   await NFT.connect(signers[1]).setApprovalForAll(Marketplace.address,true);
 
@@ -923,4 +924,31 @@ it("buy storage ", async() =>{
     await Marketplace.connect(signers[4]).buyStorage(1,1);
 })
 
+
+it.only("buy storage ,Current time more than the deadline ", async() =>{
+  let nft = {
+    winery:signers[1].address,
+    releaseDate: 1670951073,
+    amount:4,
+    royaltyAmount:10,
+    URI:"NFT1"
+  }
+  await Marketplace.connect(owner).createNFT(nft);
+
+  let plan = {
+    months:12,
+    price:50
+  }
+    await Marketplace.connect(owner).createPlan(plan);
+    expect(await NFT.ownerOf(1)).to.be.eq(signers[1].address);
+
+    await USDC.connect(owner).mint(signers[4].address,1000000000000000);
+
+    await USDC.connect(signers[4]).approve(
+      Marketplace.address,
+      1000000000000000
+    );
+    await Marketplace.connect(signers[4]).buyStorage(1,1);
+  
+})
 });

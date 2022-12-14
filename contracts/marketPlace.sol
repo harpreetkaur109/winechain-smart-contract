@@ -12,7 +12,7 @@ import "hardhat/console.sol";
 contract marketPlace is EIP712Upgradeable,BasicMetaTransaction {
 
     //  bytes32 public constant WINECHAIN_SELLER_HASH =
-    //     0x51578850e098d13a094707a5ac92c49e129a0105cf9dd73242d806c6226cb33b;
+    //  0x51578850e098d13a094707a5ac92c49e129a0105cf9dd73242d806c6226cb33b;
 
     address NFTContract;
     address admin;
@@ -59,7 +59,7 @@ contract marketPlace is EIP712Upgradeable,BasicMetaTransaction {
     function buyNFT(Struct.NFTSell calldata sell) external {
         require(sell.winery != address(0), "ZA"); //Zero Address
         require(sell.seller != address(0), "ZA"); //Zero Address        note if signature condition put ahead no need for this require
-        require(sell.seller== _verifySeller(sell), "ISA");
+        require(sell.seller == _verifySeller(sell), "ISA");
 
         if (sell.seller == sell.winery) {
             // setAmount(sell, amount);
@@ -183,6 +183,7 @@ contract marketPlace is EIP712Upgradeable,BasicMetaTransaction {
                 plans[_planNumber].months + time
             );
         } else {
+            console.log("deadline",INFT(NFTContract).checkDeadline(tokenId));
             usdc.transferFrom(msg.sender, admin, plans[_planNumber].price);
             currentPlan[tokenId] = plans[_planNumber];
             INFT(NFTContract).increaseDeadline(
