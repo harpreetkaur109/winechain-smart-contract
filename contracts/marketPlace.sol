@@ -183,7 +183,6 @@ contract marketPlace is EIP712Upgradeable,BasicMetaTransaction {
                 plans[_planNumber].months + time
             );
         } else {
-            console.log("deadline",INFT(NFTContract).checkDeadline(tokenId));
             usdc.transferFrom(msg.sender, admin, plans[_planNumber].price);
             currentPlan[tokenId] = plans[_planNumber];
             INFT(NFTContract).increaseDeadline(
